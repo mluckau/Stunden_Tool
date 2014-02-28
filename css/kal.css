@@ -1,0 +1,8 @@
+.kal_aktueller_tag {
+    color: darkorange;
+    font-weight: bolder;
+}
+
+.kal_vormonat_tag {
+    color: lightgray;
+}
