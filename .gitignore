@@ -213,3 +213,5 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+/inc/conf.inc.php
+/nbproject/

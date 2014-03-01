@@ -462,6 +462,7 @@ class user {
     }
     
     public function register($newuser){
+        $sql = $this->db->prepare('');
         
     }
     
