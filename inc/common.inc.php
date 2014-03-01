@@ -463,7 +463,7 @@ class user {
     
     public function register($newuser){
         $sql = $this->db->prepare('');
-        $this->db->bindParam('',);
+        $this->db->bindParam('');
     }
     
     public function updatePW($oldPW,$newPW){
