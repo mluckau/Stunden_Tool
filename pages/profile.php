@@ -72,7 +72,7 @@
                 </div>
                 <div class="small-6 large-6 columns">
                     <div class="panel">
-                        <p>Einladung verschicken</p>
+                        <p>Du kannst noch <?php echo $UserData['invites'];?> Einladung verschicken</p>
                         <form action="inc/common.inc.php" method="post" data-abide>
                         <div class="row">
                             <div class="small-12 large-12 columns">
@@ -80,7 +80,7 @@
                                     
                                     <div class="small-9 columns">
                                         
-                                            <input required type="text" id="new_kuerzel" placeholder="Kürzel" pattern="[a-zA-Z]">
+                                            <input required type="text" name="new_kuerzel" id="new_kuerzel" placeholder="Kürzel" pattern="[a-zA-Z]">
                                         
                                         <small class="error">Kürzel ist erforderlich und darf nur Buchstaben enthalten.</small>
                                     </div>
@@ -94,7 +94,7 @@
                             
                             <div class="small-12 large-12 columns">
 
-                                    <input type="submit" value="Einladung verschicken" class="button expand" name="inv_send" />            
+                                    <input type="submit" value="Einladung verschicken" class="button expand" name="inv" />            
 
                             </div>
                         </div>

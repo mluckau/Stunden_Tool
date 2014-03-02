@@ -45,7 +45,7 @@ include_once('inc/inc.php');
                                     {
                                         echo "Bitte einloggen";
                                     } else {
-                                        echo $_SESSION["user_vorname"]."&nbsp".$_SESSION["user_name"];
+                                        echo '<a href="index.php?p=profile">'.$_SESSION["user_vorname"].'&nbsp'.$_SESSION["user_name"].'</a>';
                                     }
                                 ?>
                             </a>
@@ -136,6 +136,9 @@ include_once('inc/inc.php');
                             break;
                         case "kal":
                                 include('pages/calendar.php');
+                            break;
+                        case "reg":
+                                include('pages/register.php');
                             break;
                         default:
                                 include('pages/mainpage.php');

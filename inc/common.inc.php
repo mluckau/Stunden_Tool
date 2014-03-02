@@ -37,6 +37,26 @@ if (isset($_POST['login_send'])) {
     
 }
 
+if (isset($_POST['inv'])){
+
+    $initial = $_POST['new_kuerzel'];
+    $inv = NEW user();
+    $inv->sendInv($initial);
+}
+
+if (isset($_POST['reg_send'])){
+    $newuser['name'] = $_POST['name'];
+    $newuser['vorname'] = $_POST['vorname'];
+    $newuser['username'] = $_POST['username'];
+    $newuser['pnumber'] = $_POST['pnumber'];
+    $newuser['pass'] = $_POST['pass1'];
+    $newuser['email'] = $_POST['email'];
+    $newuser['inv_code'] = $_POST['inv_code'];
+    
+    $reg_user = NEW user();
+    $reg_user->register($newuser);
+}
+
 if (isset($_POST['time_send'])){
     
     
@@ -390,9 +410,7 @@ class user {
     }
     
     private function userLogin($benutzer,$pass){
-    
-        
-    
+
     $sql = $this->db->prepare("SELECT * FROM `user` WHERE `username` = :username");
             
     $sql->bindParam('username', $benutzer);
@@ -414,11 +432,12 @@ class user {
     private function set_Session($loginData) {
                 $b_id = $loginData["ID"];
                 $this->lastLogin($b_id);
-                $_SESSION["userid"] = $loginData["ID"];
+                $_SESSION["userid"] = $loginData['ID'];
                 $_SESSION["username"] = $loginData["username"];
                 $_SESSION["useremail"] = $loginData["email"];
                 $_SESSION["user_name"] = $loginData["name"];
                 $_SESSION["user_vorname"] = $loginData["vorname"];
+                $_SESSION["invites"] = $loginData['invites'];
     }
     
     private function lastLogin($b_id){
@@ -462,8 +481,161 @@ class user {
     }
     
     public function register($newuser){
-        $sql = $this->db->prepare('');
-        $this->db->bindParam('');
+        if(($this->checkInvCode($newuser)) && (!$this->checkUser($newuser['username']))){
+            $this->newPW = $this->hashPW($newuser['pass']);
+            
+            $sql = $this->db->prepare('INSERT INTO `user` (`username`, `password`, `name`, `vorname`, `email`, `pers_nr`, `last_login`) VALUES (:username, :pass, :name, :vorname, :email, :pnumber, NOW())');
+            $sql->bindParam('username', $newuser['username']);
+            $sql->bindParam('pass', $this->newPW);
+            $sql->bindParam('name', $newuser['name']);
+            $sql->bindParam('vorname', $newuser['vorname']);
+            $sql->bindParam('email', $newuser['email']);
+            $sql->bindParam('pnumber', $newuser['pnumber']);
+            
+            if($this->executeStm($sql)){
+                
+                $this->updateInvCode($newuser['inv_code']);
+                echo 'Benutzer erfolgreich angelegt.';
+                
+            }else{
+                echo 'Irgendwas lief schief!';
+            }
+            
+        }else{
+//            Invite-Code FALSCH!!!
+                echo 'Der Invite-Code ist falsch!';
+        }
+        
+        
+    }
+    
+    private function updateInvCode($hash){
+        $sql = $this->db->prepare('UPDATE `invites` SET `used` = 1 WHERE `hash` = :hash;');
+        $sql->bindParam('hash', $hash);
+        if($this->executeStm($sql)){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    
+    private function checkInvCode($data){
+        $sql = $this->db->prepare('SELECT * FROM `invites` WHERE `hash` = :hash AND `name` = :username AND `email` = :email AND `used` = 0');
+        $sql->bindParam('hash', $data['inv_code']);
+        $sql->bindParam('username', $data['username']);
+        $sql->bindParam('email', $data['email']);
+        $this->executeStm($sql);
+        $count = $sql->rowCount();
+    
+        if ($count > 0) {
+                return true;
+            } else {
+                return false;
+            }
+         
+    }
+    
+    public function sendInv($initial){
+        $this->invites = $this->getInvites();
+        $this->initial = $initial;
+        
+//        Testen ob noch Einladungen vorhanden.
+        if($this->invites > 0){
+//        Testen ob der Benutzer nicht bereits vorhanden ist
+                if($this->checkUser($this->initial)){
+                    echo 'Benutzer bereits vorhanden';
+                }else{
+                    if($this->writeInv()){
+                        $this->decreaseInv();
+                        echo 'erfolgreich. Link: http://localhost/stunden_tool/index.php?p=reg&ref='.$_SESSION['userid'].'&hash='.$this->hash;
+                    }else{
+                        echo 'nicht erfolgreich';
+                    }
+                }
+        }else{
+            echo 'Du hast leider keine Einladungen mehr übrig.';
+        }
+
+        
+        
+        
+    }
+    
+    private function writeInv(){
+        $this->hash = substr(hash('sha256',($this->rndStr(100))),0,64);
+        $email = $this->initial.'@vestas.com';
+        $used = 0;
+        
+        $sql = $this->db->prepare("INSERT INTO `invites` (`hash`, `name`, `email`, `refer`, `used`, `time`) VALUES (:hash, :name, :email, :ref, :used, NOW())");
+        $sql->bindParam('hash', $this->hash);
+        $sql->bindParam('name', $this->initial);
+        $sql->bindParam('email', $email);
+        $sql->bindParam('ref', $_SESSION['userid']);
+        $sql->bindParam('used', $used);
+        
+        if($this->executeStm($sql)){
+            return true; 
+        }else{
+            return false;
+        }
+    }
+    
+    private function rndStr($laenge) {
+       //Mögliche Zeichen für den String
+       $zeichen = '0123456789';
+       $zeichen .= 'abcdefghijklmnopqrstuvwxyz';
+       $zeichen .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+       $zeichen .= '()!.:=#%§;[]+-_ ';
+
+       //String wird generiert
+       $str = '';
+       $anz = strlen($zeichen);
+       for ($i=0; $i<$laenge; $i++) {
+          $str .= $zeichen[rand(0,$anz-1)];
+       }
+       return $str;
+    }
+    
+    private function decreaseInv(){
+        $sql = $this->db->prepare("UPDATE `stunden`.`user` SET `invites`= `invites`-'1' WHERE  `ID`= :id");
+        $sql->bindParam('id', $_SESSION['userid']);
+        if($this->executeStm($sql)){
+            return true;
+        }else{
+            return false;
+        }
+        
+    }
+    
+    private function checkUser($name){
+        $sql = $this->db->prepare("SELECT `username`, `email` FROM `user` WHERE `username` = :name");
+        $sql->bindparam('name', $name);
+        
+        $this->executeStm($sql);
+    
+        $count = $sql->rowCount();
+    
+        if ($count > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        
+    }
+    
+    private function getInvites(){
+        $sql = $this->db->prepare("SELECT `invites` FROM `user` WHERE `ID` = :id");
+        $sql->bindparam('id', $_SESSION['userid']);
+        $this->executeStm($sql);
+    
+        $count = $sql->rowCount();
+    
+        if ($count > 0) {
+                $invites = $sql->fetch();
+                return $invites['invites'];
+            } else {
+                return false;
+            }
     }
     
     public function updatePW($oldPW,$newPW){
@@ -473,7 +645,7 @@ class user {
             $sql = $this->db->prepare('UPDATE `user` SET `password` = :newPW WHERE `ID` = :userid');
             $sql->bindParam('newPW', $hashnewPW);
             $sql->bindParam('userid', $_SESSION['userid']);
-               try 
+        try 
         {
             $sql->execute();
             return true;
@@ -530,7 +702,13 @@ class user {
             try 
         {
             $sql->execute();
-            return true;
+            $count = $sql->rowCount();
+            if($count>0){
+                return true;
+            }else{
+                return false;
+            }
+            
         }
         catch (PDOException $e)
         {
@@ -544,5 +722,7 @@ class user {
     }
     
 }
+
+
 
 ?>
