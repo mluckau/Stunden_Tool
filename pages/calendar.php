@@ -2,7 +2,7 @@
 
 function getCalendar($month,$year) {
 
-    $daten = new zeiten(1);
+    $daten = new zeiten($_SESSION['userid']);
     $days = $daten->getMonth($month, $year);
     $summen = $daten->getSum($month, $year);
     
@@ -104,8 +104,8 @@ function getCalendar($month,$year) {
 ?>
 
 <div class="row">
-    <div class="small-10 large-12 columns small-centered large-centered">
+    <div class="small-10 large-12 small-centered large-centered columns">
         <p></p>
-        <?php echo getCalendar(02, 2014);?>
+        <?php echo getCalendar(03, 2014);?>
     </div>
 </div>
