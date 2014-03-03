@@ -1,8 +1,15 @@
 <?php
 
-$host = '127.0.0.1'; //Adresse der Datenbank
-$benutzer = 'stunden'; //Datenbankbenutzer
-$passwort = 'stunden'; //Kennwort
-$datenbank = 'stunden'; // Datenbank Name
+$host = 'localhost'; //Adresse der Datenbank
+$benutzer = ''; //Datenbankbenutzer
+$passwort = ''; //Datenbank Kennwort
+$datenbank = ''; // Datenbank Name
+
+$domain = 'http://localhost/'; //Domain der Anwendung, inkl. http und root-verzeichniss mit abschließenden "/"
+
+$adminname = ''; //Angezeigter Absendername bei Emails
+$adminmail = ''; //Email From: Feld
+$emaildomain = '@'; //Email-Domain die zur Benutzung des Tools erlaubt ist.
+
 
 ?>
